@@ -1,0 +1,4 @@
+string transformed_frame_id
+geometry_msgs/PoseArray poses
+---
+geometry_msgs/PoseArray poses_transformed

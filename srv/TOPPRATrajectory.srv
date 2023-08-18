@@ -1,0 +1,10 @@
+int32 frequency                                     # frequency of interpolated trajectory
+float32 max_vel                                     # max linear velocity
+float32 max_acc                                     # max linear acceleration
+float32 max_yawrate                                 # max angular velocity
+float32 max_yawrate_dot                             # max angular acceleration
+geometry_msgs/PoseArray poses                       # array of poses to interpolate
+std_msgs/Duration start_time                    # trajectory start time
+---
+trajectory_msgs/MultiDOFJointTrajectory trajectory  # returned interpolated trajectory
+std_msgs/Duration end_time                      # trajectory end time

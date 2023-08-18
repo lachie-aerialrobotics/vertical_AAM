@@ -1,0 +1,5 @@
+string prefix
+string frame_id
+int32 layer_number
+---
+geometry_msgs/PoseArray poses

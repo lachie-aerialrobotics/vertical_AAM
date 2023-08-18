@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="vehicle_name" default="iris"/> <!-- hex, hex_delta or hex_stewart -->
+    <arg name="world_name" default="ARLarena"/> <!-- ARLarena or DroneHub -->
+    <arg name="viz" default="true"/>
+    <arg name="init" default="true"/>
+    
+    <!-- DRONE SPAWN POINT -->
+    <arg name="x" default="0"/>
+    <arg name="y" default="2"/>
+    <arg name="z" default="0.5"/>
+    <arg name="R" default="0"/>
+    <arg name="P" default="0"/>
+    <arg name="Y" default="0.5"/>
+
+    <!-- LiDAR POSITION -->
+    <arg name="x_lidar2base" default="-0.13"/>
+    <arg name="y_lidar2base" default="0"/>
+    <arg name="z_lidar2base" default="-0.069"/>
+    <arg name="R_lidar2base" default="0"/>
+    <arg name="P_lidar2base" default="0"/>
+    <arg name="Y_lidar2base" default="0"/>
+    
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="transform_map2base_init" args="$(arg x) $(arg y) $(arg z) $(arg R) $(arg P) $(arg Y) map base_link_init" /> -->
+    
+    <!-- ODOMETRY FUDGE -->
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="transform_base2base" args="0 0 0 0 0 0 hex::base_link base_link" /> -->
+    
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="transform_body2sensor_init" args="$(arg x_lidar2base) $(arg y_lidar2base) $(arg z_lidar2base) $(arg R_lidar2base) $(arg P_lidar2base) $(arg Y_lidar2base) LiDAR_init base_link_init" /> -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="transform_body2sensor" args="-$(arg x_lidar2base) -$(arg y_lidar2base) -$(arg z_lidar2base) -$(arg R_lidar2base) -$(arg P_lidar2base) -$(arg Y_lidar2base) base_link LiDAR" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="transform_map2odom" args="0 0 0 0 0 0 odom map" />
+
+    <!-- LAUNCH VANILLA GAZEBO SIM -->
+    <include file="$(find tricopter)/launch/sim/px4_gazebo.launch">
+        <arg name="x" value="$(arg x)"/>
+        <arg name="y" value="$(arg y)"/>
+        <arg name="z" value="$(arg z)"/>
+        <arg name="R" value="$(arg R)"/>
+        <arg name="P" value="$(arg P)"/>
+        <arg name="Y" value="$(arg Y)"/>
+        <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="vehicle" value="$(arg vehicle_name)"/>
+    </include>
+
+    <!-- LIDAR MAP SIMULATION -->
+    <include file="$(find tricopter)/launch/sim/lidar_sim.launch">
+        <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="x" value="$(arg x)"/>
+        <arg name="y" value="$(arg y)"/>
+        <arg name="z" value="$(arg z)"/>
+    </include>
+
+    <!-- MANIPULATOR -->
+    <include file="$(find delta_2)/launch/stewart.launch">
+        <arg name="sim" value="true"/>
+        <arg name="model_name" value="$(arg vehicle_name)"/>
+    </include>
+
+    <!-- PRINTING -->
+    <group if="$(arg init)">
+        <node name="print_initialiser" pkg="tricopter" type="print_plane_finder.py" required="true" output="screen"/>
+    </group>
+
+    <group unless="$(arg init)">
+        <rosparam file="$(find tricopter)/cfg/print_config/print_origin.yaml" />
+        <node name="print_layer_generator" pkg="tricopter" type="print_layer_generator.py" required="true" output="screen"/>
+    </group>
+
+    <!---->
+    <node name="controller" pkg="tricopter" type="trajectory_controller.py" required="true" output="screen"/>
+    <node name="trajectory_services" pkg="tricopter" type="trajectory_services.py" required="true" output="screen"/> 
+    <node name="print_manager" pkg="tricopter" type="print_manager.py" output="screen" respawn="true"/>
+
+
+    <!-- RVIZ AND RQT-->
+    <group if="$(arg viz)">
+        <node type="rviz" name="rviz" pkg="rviz" args="-d $(find tricopter)/rviz/printing.rviz"/>
+    </group>
+</launch>

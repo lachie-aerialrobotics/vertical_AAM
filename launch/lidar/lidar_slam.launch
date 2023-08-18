@@ -1,0 +1,101 @@
+<launch>
+    <arg name="init_map" default="false"/>
+    <arg name="map_path" default="$(find point_lio)/PCD/scans.pcd"/>
+
+    <!-- Drone geometry -->
+    <!-- LiDAR centre to FCU -->
+        <arg name="x_lidar2base" default="-0.13"/>
+        <arg name="y_lidar2base" default="0"/>
+        <arg name="z_lidar2base" default="-0.069"/>
+        <arg name="R_lidar2base" default="0"/>
+        <arg name="P_lidar2base" default="0"/>
+        <arg name="Y_lidar2base" default="0"/>
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_lidar2base" args="$(arg x_lidar2base) $(arg y_lidar2base) $(arg z_lidar2base) $(arg R_lidar2base) $(arg P_lidar2base) $(arg Y_lidar2base) aft_mapped base_link" />
+        
+    <!-- Height of FCU off ground-->
+        <arg name="x_ground2lidar" default="0.13"/>
+        <arg name="y_ground2lidar" default="0"/>
+        <arg name="z_ground2lidar" default="0.369"/>
+        <arg name="R_ground2lidar" default="0"/>
+        <arg name="P_ground2lidar" default="0"/>
+        <arg name="Y_ground2lidar" default="0"/>
+
+    <!-- livox_ros_driver2 -->
+        <include file="$(find vertical_aam)/launch/lidar/msg_MID360.launch">
+            <arg name="publish_freq" default = "100.0"/>
+            <arg name="config_name" default = "MID360_config_0.json"/>
+        </include>
+
+    <!-- point_lio -->
+        <!-- <group if="$(arg init_map)">
+            <node pkg="point_lio" type="pointlio_mapping" name="laserMapping" output="screen">
+                <rosparam command="load" file="$(find vertical_aam)/cfg/MID360_cfgs/point_lio_mid360_initialise.yaml" />
+                <param name="use_imu_as_input" type="bool" value="0"/> 
+                <param name="prop_at_freq_of_imu" type="bool" value="1"/>
+                <param name="check_satu" type="bool" value="1"/>
+                <param name="init_map_size" type="int" value="10"/>
+                <param name="point_filter_num" type="int" value="1"/>
+                <param name="space_down_sample" type="bool" value="1" />  
+                <param name="filter_size_surf" type="double" value="0.1" />
+                <param name="filter_size_map" type="double" value="0.1" />
+                <param name="cube_side_length" type="double" value="1000" />
+                <param name="runtime_pos_log_enable" type="bool" value="0" />
+            </node>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init" />
+        </group>
+        <group unless="$(arg init_map)">
+            <node pkg="point_lio" type="pointlio_mapping" name="laserMapping" output="screen">
+                <rosparam command="load" file="$(find vertical_aam)/cfg/MID360_cfgs/point_lio_mid360_relocalise.yaml" />
+                <param name="use_imu_as_input" type="bool" value="0"/> 
+                <param name="prop_at_freq_of_imu" type="bool" value="1"/>
+                <param name="check_satu" type="bool" value="1"/>
+                <param name="init_map_size" type="int" value="10"/>
+                <param name="point_filter_num" type="int" value="1"/> 
+                <param name="space_down_sample" type="bool" value="1" />  
+                <param name="filter_size_surf" type="double" value="0.1" />
+                <param name="filter_size_map" type="double" value="0.1" /> 
+                <param name="cube_side_length" type="double" value="1000" />
+                <param name="runtime_pos_log_enable" type="bool" value="0" />
+            </node>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init_map" />
+        </group>     -->
+
+        <group if="$(arg init_map)">
+            <rosparam command="load" file="$(find vertical_aam)/cfg/MID360_cfgs/fast_lio_mid360_initialise.yaml" />
+            <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init" />
+        </group>
+        <group unless="$(arg init_map)">
+            <rosparam command="load" file="$(find vertical_aam)/cfg/MID360_cfgs/fast_lio_mid360_relocalise.yaml" />
+            <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init_map" />
+        </group>  
+
+        <param name="feature_extract_enable" type="bool" value="0"/>
+        <param name="point_filter_num" type="int" value="1"/>
+        <param name="max_iteration" type="int" value="3" />
+        <param name="filter_size_surf" type="double" value="0.1" />
+        <param name="filter_size_map" type="double" value="0.2" />
+        <param name="cube_side_length" type="double" value="1000" />
+        <param name="runtime_pos_log_enable" type="bool" value="0" />
+        <node pkg="fast_lio" type="fastlio_mapping" name="laserMapping" output="log" />    
+
+    <!-- SC-A-LOAM -->
+        <include file="$(find aloam_velodyne)/launch/aloam_point_lio.launch"/>
+
+    <!-- Re-localization -->
+        <group unless="$(arg init_map)">
+        <rosparam file="$(find vertical_aam)/cfg/MID360_cfgs/relocalise_mid360.yaml" />
+        <node pkg="fast_lio_localization" type="global_localization.py" name="global_localization" output="log" />
+        <node pkg="fast_lio_localization" type="transform_fusion.py" name="transform_fusion" output="log" />
+        <node pkg="pcl_ros" type="pcd_to_pointcloud" name="map_publisher" output="log"
+            args="$(arg map_path) 1 _frame_id:=camera_init_map cloud_pcd:=/map_init" />
+        
+
+    <!-- PRINTING -->
+        <node name="print_initialiser" pkg="vertical_aam" type="print_plane_finder.py" required="true" output="screen"/>
+        <rosparam file="$(find vertical_aam)/cfg/print_config/print_origin.yaml" />
+        <node name="print_layer_generator" pkg="vertical_aam" type="print_layer_generator.py" required="true" output="screen"/>
+        </group>
+    <!-- Viz -->
+        <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find point_lio)/rviz_cfg/loam_livox.rviz" />
+
+</launch>

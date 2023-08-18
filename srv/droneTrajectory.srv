@@ -1,0 +1,5 @@
+string drone_body_frame_id
+string tooltip_frame_id
+trajectory_msgs/MultiDOFJointTrajectory toolpath_trajectory
+---
+trajectory_msgs/MultiDOFJointTrajectory drone_trajectory
