@@ -12,7 +12,7 @@ import tf2_geometry_msgs
 from visualization_msgs.msg import MarkerArray, Marker
 from std_msgs.msg import Header
 from sensor_msgs.msg import PointCloud2
-from geometry_msgs.msg import PoseStamped, TransformStamped, Transform, Twist
+from geometry_msgs.msg import PoseStamped, TransformStamped, Transform, Twist, TwistStamped, WrenchStamped
 from nav_msgs.msg import Path
 from vertical_aam.srv import *
 from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
@@ -100,6 +100,7 @@ class PrintLayerGenerator:
 
         traj = intersection_finder(print_detected, mesh, self.estimated_layer_height)
         traj.header.frame_id = self.print_frame
+
         publish_viz_trajectory(traj, self.trajectory_viz_pub)
         
         resp = generateLayerResponse()
@@ -442,7 +443,6 @@ def write_tf_to_yaml(tf=TransformStamped(), dir="../../cfg/print_config/"):
         rospy.loginfo("Print origin saved succesfully!")
     except:
         rospy.logwarn("Writing print origin to file failed!")
-
 
 if __name__ == "__main__":
     rospy.init_node('print_layer_generator_service_client')

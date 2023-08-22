@@ -1,5 +1,5 @@
 print_planner:
-  setpoint_rate:            100 #Hz
+  setpoint_rate:            30 #Hz
 
   #Take-off and landing
   tol_speed:                0.1 #m/s
