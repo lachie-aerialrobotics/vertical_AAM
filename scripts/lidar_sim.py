@@ -28,7 +28,7 @@ class LidarSim:
         tfListener = tf2_ros.TransformListener(self.tfBuffer)
         
         #init publisher
-        self.pub_map = rospy.Publisher('/map', PointCloud2, queue_size=1)
+        self.pub_map = rospy.Publisher('/aft_pgo_map', PointCloud2, queue_size=1)
         dir = self.world_dir
         world_mesh = world_parser(dir)
         if len(world_mesh.triangles) == 0:

@@ -1,26 +1,40 @@
 import rospy
+import numpy as np
 from std_msgs.msg import String
 from geometry_msgs.msg import PoseStamped, TwistStamped, Vector3, Quaternion
 from mavros_msgs.msg import State, ExtendedState
 from vertical_aam.srv import *
 from transitions import Machine
 from trajectory_handler import *
-from misc_functions import *
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+
+import toppra as ta
+import toppra.constraint as constraint
+import toppra.algorithm as algo
 
 
 class printStateMachine(object):
-    states = ['Takeoff', 'Landing', 'Home', 'Move', 'Print', 'Ground', 'Manual']
+    states = ['Ground', 'Takeoff', 'Scan', 'Print', 'Land', 'Manual']
+
+    # transitions = [
+    #     {'trigger': 'startTakeoff',     'source': ['Ground', 'Manual'],  'dest': 'Takeoff',  'after':   'on_startTakeoff'  },
+    #     {'trigger': 'startPrint',       'source': 'Move',                       'dest': 'Print',    'before':  'on_startPrint'    },
+    #     {'trigger': 'arriveAtHome',     'source': 'Move',                           'dest': 'Home',     'after':   'on_arriveAtHome'  },
+    #     {'trigger': 'goToHome',         'source': ['Takeoff', 'Print', 'Manual'],   'dest': 'Move',     'before':  'on_goToHome'      },
+    #     {'trigger': 'goToPrint',        'source': 'Home',                           'dest': 'Move',     'before':  'on_goToPrint'     },
+    #     {'trigger': 'goToPad',          'source': 'Home',                           'dest': 'Move',     'before':  'on_goToPad'       },
+    #     {'trigger': 'startLanding',     'source': 'Move',                           'dest': 'Landing',  'after':   'on_startLanding'  },
+    #     {'trigger': 'manualTakeover',   'source': '*',                              'dest': 'Manual',   'before':  'on_manualTakeover'},
+    #     {'trigger': 'switchToGround',   'source': ['Manual', 'Landing'],            'dest': 'Ground'                                  }     
+    #     ]
 
     transitions = [
-        {'trigger': 'startTakeoff',     'source': ['Ground', 'Manual'],                         'dest': 'Takeoff',  'after':   'on_startTakeoff'  },
-        {'trigger': 'startPrint',       'source': 'Move',                       'dest': 'Print',    'before':  'on_startPrint'    },
-        {'trigger': 'arriveAtHome',     'source': 'Move',                           'dest': 'Home',     'after':   'on_arriveAtHome'  },
-        {'trigger': 'goToHome',         'source': ['Takeoff', 'Print', 'Manual'],   'dest': 'Move',     'before':  'on_goToHome'      },
-        {'trigger': 'goToPrint',        'source': 'Home',                           'dest': 'Move',     'before':  'on_goToPrint'     },
-        {'trigger': 'goToPad',          'source': 'Home',                           'dest': 'Move',     'before':  'on_goToPad'       },
-        {'trigger': 'startLanding',     'source': 'Move',                           'dest': 'Landing',  'after':   'on_startLanding'  },
-        {'trigger': 'manualTakeover',   'source': '*',                              'dest': 'Manual',   'before':  'on_manualTakeover'},
-        {'trigger': 'switchToGround',   'source': ['Manual', 'Landing'],            'dest': 'Ground'                                  }     
+        {'trigger': 'startTakeoff',     'source': ['Ground', 'Manual'],             'dest': 'Takeoff'},
+        {'trigger': 'startScan',        'source': ['Takeoff', 'Manual', 'Print'],   'dest': 'Scan'},
+        {'trigger': 'startPrint',       'source': 'Scan',                           'dest': 'Print'},
+        {'trigger': 'startLanding',     'source': 'Scan',                           'dest': 'Land'},
+        {'trigger': 'finishLanding',    'source': ['Land', 'Manual'],               'dest': 'Ground'},
+        {'trigger': 'manualTakeover',   'source': '*',                              'dest': 'Manual'},
         ]
     
     def __init__(self):
@@ -32,11 +46,7 @@ class printStateMachine(object):
         self.max_acc_move = rospy.get_param('/print_planner/transition_max_accel')
         self.max_yawrate = rospy.get_param('/print_planner/max_yawrate')
         self.max_yawrate_dot = rospy.get_param('/print_planner/max_yawrate_dot')             
-        self.offset = rospy.get_param('/print_planner/offset')
 
-        # initial values
-        # self.target = FlatTarget()
-        # self.target.header.frame_id = "map"
         self.yaw = 0.0
         self.tooltip_state = "RETRACTED"
         self.tooltip_pose = PoseStamped()
@@ -126,49 +136,36 @@ class printStateMachine(object):
         print("HOME")
         print("pose-------------")
         print(self.pose)
-        if self.layer < rospy.get_param(str(self.tH_print.waypoint_prefix) + '/n_layers'):
-            rospy.loginfo("Generating trajectory for next layer")
-            self.tH_print.generate_print_layer(self.layer)
-            rospy.loginfo("starting print")
+        # generate trajectory
+        if #layer generation succesful:
+            rospy.loginfo("starting print layer")
             self.goToPrint()
         else:
             self.goToPad()
-    
-    def on_startLanding(self):
-        rospy.loginfo("Landing initiated")
-   
-    def on_goToPad(self):
-        print("pose-------------")
-        print(self.pose)
-        print("pad--------------")
-        print(self.pad_pose)
-        rospy.loginfo("Generating trajectory to pad")
-        self.tH_move.generate_transition(self.pose, self.pad_pose)  
-        self.moveCompletionTransition = self.startLanding
 
-    def on_goToPrint(self): 
-        rospy.loginfo("Generating trajectory to beginning of print")  
-        print("pose-------------")
-        print(self.pose)
-        self.print_start_pose = self.tH_print.get_print_start_pose()
-        self.tH_move.generate_transition(self.pose, self.print_start_pose)
-        self.moveCompletionTransition = self.arriveAtPrint
+    def on_startScan(self):
+        rospy.loginfo("Generating trajectory to scan position")
+        ####
+        self.scan_start = PoseStamped()
+        self.scan_start.header.stamp = rospy.Time.now()
+        self.scan_start.header.frame_id = 'map'
+        self.scan_start.pose.position.x = 0
+        self.scan_start.pose.position.y = 0
+        self.scan_start.pose.position.z = 5
+        self.scan_start.pose.orientation.w = 1
+        ####
+        trajectory_to_scan = generate_transition(self.pose, self.scan_start)
+        scanning_trajectory = generate_pause(self.scan_start, 5)
 
-    def on_startPrint(self):
-        rospy.loginfo("Printing...")
+        self.trajectory = trajectory()
+        self.trajectory.append(trajectory_to_scan)
+        self.trajectory.append(scanning_trajectory)
 
-    def on_goToHome(self):
-        rospy.loginfo("Generating trajectory to loiter position")
-        print("pose-------------")
-        print(self.pose)
+
         # determine loiter point above print
-        if self.layer < rospy.get_param(str(self.tH_print.waypoint_prefix) + '/n_layers'):
-            self.home_pose = self.tH_print.get_loiter_point(self.layer, self.offset)
-        self.tH_move.generate_transition(self.pose, self.home_pose)
-        self.moveCompletionTransition = self.arriveAtHome
-
-    def on_arriveAtPrint(self):
-        rospy.loginfo("Arrived at print start - waiting for velocity/position tolerances")
+        # generate transition trajectory
+        # generate scanning trajectory
+        # restart mapping
 
     def on_manualTakeover(self):
         rospy.loginfo("Manual takeover")
@@ -176,11 +173,18 @@ class printStateMachine(object):
     #---------------------------------------------------------------------------------------------------------------
     # callbacks to occur on timer event - need to be defined for every state that is called
 
-    def during_Home(self):
+    def during_Scan(self):
         self.tooltip_state = "HOME"
-        self.pose = self.home_pose
-        self.velocity.twist.linear = Vector3(0,0,0)
-        self.velocity.twist.angular = Vector3(0,0,0)
+        # follow scan trajectory
+        # when scan quality threshold is met (or maybe just complete trajectory):
+        # try:
+        # generate trajectory to print
+        # generate print trajectory
+        complete, self.pose, self.velocity = self.trajectory.follow()
+        if complete:
+            self.startPrint()
+        # else:
+        # self.startLanding()
 
     def during_Takeoff(self):
         self.tooltip_state = "HOME"
@@ -193,20 +197,17 @@ class printStateMachine(object):
             self.pose.pose.position.z = self.takeoff_hgt
             self.velocity.twist.linear = Vector3(0,0,0)
             if self.mavros_ext_state.landed_state == 2:
-                self.goToHome()
-
-    def during_Move(self):
-        self.tooltip_state = "HOME"
-        self.pose, self.velocity, self.acceleration, complete = self.tH_move.follow_transition_trajectory()
-        if complete:
-            self.moveCompletionTransition()
+                self.startScan()
 
     def during_Print(self):
         self.tooltip_state = "STAB_6DOF"
-        self.pose, self.velocity, self.acceleration, self.tooltip_pose, self.tooltip_twist, self.tooltip_accel, complete = self.tH_print.follow_print_trajectory()
-        if complete:
-            self.layer += 1
-            self.goToHome()
+        # follow print trajectory
+        # self.pose, self.velocity = self.print_trajectory.follow()
+        # self.pose, self.velocity, self.acceleration, self.tooltip_pose, self.tooltip_twist, self.tooltip_accel, complete = self.tH_print.follow_print_trajectory()
+        # if complete:
+        #     self.layer += 1
+        #     self.goToHome()
+        self.startLanding()
 
     def during_Landing(self):
         self.tooltip_state = "HOME"
@@ -252,6 +253,7 @@ class printStateMachine(object):
     def _timer_cb(self, event): #timer callback runs at specified rate to output setpoints
         self.during_always()
         exec("self.during_" + str(self.state) + "()") #execute the function name corresponding to the current state
+
         # update time stamps and publish current values of drone and manipulator commands
         self.tooltip_pose.header.stamp = rospy.Time.now()
         self.tooltip_twist.header.stamp = rospy.Time.now()
@@ -288,6 +290,141 @@ class printStateMachine(object):
 
     def _sp_raw_cb(self, sp_raw_msg):
         self.setpoint_raw = sp_raw_msg
+
+
+class trajectory:
+    def __init__(self, trajectory=MultiDOFJointTrajectory()):
+        self.trajectory = trajectory
+        self.start_time = rospy.Time.now()
+        self.i = 0
+    def follow(self):
+        if self.i >= len(self.trajectory.points)-1:
+            complete = True
+        else:
+            while (self.trajectory.points[self.i].time_from_start.to_sec() + self.start_time.to_sec()) < rospy.Time.now().to_sec():
+                self.i += 1
+            complete = False  
+        pose = PoseStamped()
+        pose.header.frame_id = self.trajectory.header.frame_id
+        pose.header.stamp = rospy.Time.now()
+        pose.pose.position = self.trajectory.points[self.i].transforms[0].translation
+        pose.pose.orientation = self.trajectory.points[self.i].transforms[0].rotation
+        twist = TwistStamped()
+        twist.header.frame_id = self.trajectory.header.frame_id
+        twist.header.stamp = rospy.Time.now()
+        twist.twist = self.trajectory.points[self.i].velocities[0]
+        return complete, pose, twist
+    def append(self, trajectory_app=MultiDOFJointTrajectory()):
+        last_index = len(self.trajectory.points)-1
+        for j in len(trajectory_app.points):
+            trajectory_app.points[j].time_from_start += self.trajectory.points[last_index].time_from_start
+            self.trajectory.points.append(trajectory_app.points)
+
+
+def generate_transition(start_pose=PoseStamped(), end_pose=PoseStamped()):
+    poses = PoseArray()
+    poses.header.stamp = rospy.Time.now()
+    poses.header.frame_id = start_pose.header.frame_id
+    if start_pose.pose != end_pose.pose:
+        if start_pose.header.frame_id != end_pose.header.frame_id:
+            rospy.logerr("Cannot interpolate between poses in different reference frames.")
+        else:
+            poses.poses.append(start_pose.pose)
+            poses.poses.append(end_pose.pose)        
+            transition_trajectory = _TOPPRA_interpolation(poses)
+    return transition_trajectory
+
+def generate_pause(pose=PoseStamped(), time=0):
+    trajectory = MultiDOFJointTrajectory()
+    trajectory.header.frame_id = pose.header.frame_id
+    trajectory.header.stamp = pose.header.stamp
+    traj_point_init = MultiDOFJointTrajectoryPoint()
+    traj_point_init.transforms[0].translation = pose.pose.position
+    traj_point_init.transforms[0].rotation = pose.pose.orientation
+    traj_point_init.time_from_start = rospy.Duration(0)
+    traj_point_final = traj_point_init
+    traj_point_final.time_from_start = rospy.Duration(time)
+    trajectory.points.append(traj_point_init)
+    trajectory.points.append(traj_point_final)
+    return trajectory
+
+def _TOPPRA_interpolation(poses, max_vel=0.15, max_acc=0.5, may_yawrate=1.0, may_yawrate_dot=10.0, frequency=30):
+    # generates a smooth, interpolated, time-optimal trajectory from an array of poses using TOPPRA package
+
+    num_poses = len(poses.poses)
+    
+    rospy.loginfo("Trajectory requested. Interpolating " + str(num_poses) + " poses at " + str(frequency) + "Hz.")
+
+    way_pts = np.zeros((num_poses, 6))
+    for i in range(num_poses):
+        (roll, pitch, yaw) = euler_from_quaternion([poses[i].orientation.x,
+                                                    poses[i].orientation.y,
+                                                    poses[i].orientation.z,
+                                                    poses[i].orientation.w])
+        way_pts[i,:] = [poses.poses[i].position.x, poses.poses[i].position.y, poses.poses[i].position.z, roll, pitch, yaw]
+    
+    ss = np.linspace(0, 1, num_poses)
+    
+    amax = max_acc
+    vmax = max_vel
+    max_yawrate = np.deg2rad(max_yawrate)
+    max_yawrate_dot = np.deg2rad(max_yawrate_dot)
+    vlims = [vmax, vmax, vmax, max_yawrate, max_yawrate, max_yawrate]
+    alims = [amax, amax, amax, max_yawrate_dot, max_yawrate_dot, max_yawrate_dot]
+    
+    path = ta.SplineInterpolator(ss, way_pts)
+    pc_vel = constraint.JointVelocityConstraint(vlims)
+    pc_acc = constraint.JointAccelerationConstraint(alims)
+    instance = algo.TOPPRA([pc_vel, pc_acc], path, parametrizer="ParametrizeConstAccel")
+    traj = instance.compute_trajectory(0, 0)
+
+    n_samples = int(traj.duration * frequency)
+    ts_sample = np.linspace(0, traj.duration, n_samples)
+    qs_sample = traj(ts_sample, 0) #position setpoints
+    qds_sample = traj(ts_sample, 1) #velocity setpoints
+    qdds_sample = traj(ts_sample, 2) #acceleration setpoints
+
+    trajectory = MultiDOFJointTrajectory()
+    trajectory.header.frame_id = poses.header.frame_id
+    trajectory.header.stamp = rospy.Time.now()
+
+    for i in range(n_samples):
+        trans = Transform()
+        trans.translation.x = qs_sample[i,0]
+        trans.translation.y = qs_sample[i,1]
+        trans.translation.z = qs_sample[i,2]
+        q = quaternion_from_euler(qs_sample[i,3], qs_sample[i,4], qs_sample[i,5])
+        trans.rotation.x = q[0]
+        trans.rotation.y = q[1]
+        trans.rotation.z = q[2]
+        trans.rotation.w = q[3]
+
+        vel = Twist()
+        vel.linear.x = qds_sample[i,0]
+        vel.linear.y = qds_sample[i,1]
+        vel.linear.z = qds_sample[i,2]
+        vel.angular.x = qds_sample[i,3]
+        vel.angular.y = qds_sample[i,4]
+        vel.angular.z = qds_sample[i,5]
+
+        accel = Twist()
+        accel.linear.x = qdds_sample[i,0]
+        accel.linear.y = qdds_sample[i,1]
+        accel.linear.z = qdds_sample[i,2]
+        accel.angular.x = qdds_sample[i,3]
+        accel.angular.y = qdds_sample[i,4]
+        accel.angular.z = qdds_sample[i,5]
+
+        trajectory_point = MultiDOFJointTrajectoryPoint()
+        trajectory_point.transforms.append(trans)
+        trajectory_point.velocities.append(vel)
+        trajectory_point.accelerations.append(accel)
+        trajectory_point.time_from_start = rospy.Duration(i / frequency)
+
+        trajectory.points.append(trajectory_point)
+
+    rospy.loginfo("Trajectory ready")
+    return trajectory
     
     
 if __name__ == '__main__':

@@ -43,7 +43,7 @@
         <arg name="respawn_gazebo" value="$(arg respawn_gazebo)"/>
     </include>
     <!-- MAVROS -->
-    <include file="$(find tricopter)/launch/flight_controller/px4.launch">
+    <include file="$(find vertical_aam)/launch/flight_controller/px4.launch">
         <!-- GCS link is provided by SITL -->
         <arg name="gcs_url" value=""/>
         <arg name="fcu_url" value="$(arg fcu_url)"/>

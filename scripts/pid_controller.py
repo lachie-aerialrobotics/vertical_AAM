@@ -4,7 +4,7 @@ import numpy as np
 from geometry_msgs.msg import PoseStamped, TwistStamped
 from tf.transformations import euler_from_quaternion
 from dynamic_reconfigure.server import Server
-from tricopter.cfg import PIDConfig
+from vertical_aam.cfg import PIDConfig
 
 class PIDController:
     def __init__(self):
@@ -18,34 +18,10 @@ class PIDController:
         self.i_err = 0.0
         self.t = rospy.Time.now()
 
-        #init publisher
-        self.pub_vel = rospy.Publisher(
-            '/mavros/setpoint_velocity/cmd_vel', 
-            TwistStamped, 
-            queue_size=1, 
-            tcp_nodelay=True)
-        
-        #drone state subscriber
-        sub_mav_pose = rospy.Subscriber(
-            '/mavros/local_position/pose', 
-            PoseStamped, 
-            self.controller_cb, 
-            queue_size=1, 
-            tcp_nodelay=True)
-
-        #setpoint subscribers
-        sub_sp_pose = rospy.Subscriber(
-            '/setpoint/pose', 
-            PoseStamped, 
-            self.pose_sp_cb, 
-            queue_size=1, 
-            tcp_nodelay=True)
-        sub_sp_vel = rospy.Subscriber(
-            '/setpoint/vel', 
-            TwistStamped, 
-            self.vel_sp_cb, 
-            queue_size=1, 
-            tcp_nodelay=True)
+        self.pub_vel = rospy.Publisher('/mavros/setpoint_velocity/cmd_vel', TwistStamped, queue_size=1, tcp_nodelay=True)
+        sub_mav_pose = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.controller_cb, queue_size=1, tcp_nodelay=True)
+        sub_sp_pose = rospy.Subscriber('/setpoint/pose', PoseStamped, self.pose_sp_cb, queue_size=1, tcp_nodelay=True)
+        sub_sp_vel = rospy.Subscriber('/setpoint/vel', TwistStamped, self.vel_sp_cb, queue_size=1, tcp_nodelay=True)
 
         rospy.spin()
 
@@ -53,34 +29,26 @@ class PIDController:
         sp_vel = self.sp_vel
         sp_pose = self.sp_pose
         mav_pose = pose2np(mav_pose_msg)
-
         vel_cmd = sp_vel + self.pos_PID(mav_pose, sp_pose)
-
         self.pub_vel.publish(np2twist(vel_cmd))
 
     def pos_PID(self, mav_pose, sp_pose):
         err = sp_pose - mav_pose
-
         dt = (rospy.Time.now() - self.t).to_sec()
         self.t = rospy.Time.now()
-     
         if dt == 0:
             d_err = 0
             self.i_err += 0
         else:
             d_err = (err - self.err) / dt
             self.i_err += err * dt
-
         self.err = err
-
         vel_cmd = self.P * err + self.I * self.i_err + self.D * d_err
-
         for i in range(4):
             if vel_cmd[i] > self.v_max[i]:
                 vel_cmd[i] = self.v_max[i]
             elif vel_cmd[i] < -self.v_max[i]:
                 vel_cmd[i] = -self.v_max[i]
-
         return vel_cmd
     
     def pose_sp_cb(self, pose_msg):
@@ -90,25 +58,15 @@ class PIDController:
         self.sp_vel = twist2np(vel_msg)
     
     def config_cb(self, config, level):
-        self.v_max = np.asarray([config.vmax_xyz, 
-                                 config.vmax_xyz, 
-                                 config.vmax_xyz, 
-                                 config.vmax_yaw])
-        self.P = np.asarray([config.P_xy, 
-                             config.P_xy, 
-                             config.P_z, 
-                             config.P_yaw])
+        self.v_max = np.asarray([config.vmax_xyz, config.vmax_xyz, config.vmax_xyz, config.vmax_yaw])
+        self.P = np.asarray([config.P_xy, config.P_xy, config.P_z, config.P_yaw])
         #todo: re-enable and fix I term
         # self.I = np.asarray([config.I_xy, 
         #                      config.I_xy, 
         #                      config.I_z, 
         #                      0])
         self.I = np.zeros(4)
-        self.D = np.asarray([config.D_xy, 
-                             config.D_xy, 
-                             config.D_z, 
-                             0])
-        
+        self.D = np.asarray([config.D_xy, config.D_xy, config.D_z, 0])
         return config
 
 def twist2np(msg):

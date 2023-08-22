@@ -8,7 +8,7 @@ import tf2_geometry_msgs
 from geometry_msgs.msg import Pose, PoseArray, PoseStamped, TwistStamped, TransformStamped, Transform, Twist, WrenchStamped, Vector3, Vector3Stamped, Quaternion
 from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
 from tf.transformations import euler_from_quaternion, quaternion_from_euler, quaternion_inverse
-from tricopter.srv import *
+from vertical_aam.srv import *
 
 import toppra as ta
 import toppra.constraint as constraint

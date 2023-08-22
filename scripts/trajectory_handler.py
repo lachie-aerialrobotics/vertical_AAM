@@ -5,7 +5,7 @@ from std_msgs.msg import Header
 from geometry_msgs.msg import Pose, Twist, PoseArray, PoseStamped, TwistStamped, Transform, Vector3
 from nav_msgs.msg import Path
 from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
-from tricopter.srv import *
+from vertical_aam.srv import *
 from viz_functions import *
 
 class trajectoryHandler:
@@ -98,10 +98,6 @@ class trajectoryHandler:
                 poses.poses.append(start_pose.pose)
                 poses.poses.append(end_pose.pose)        
                 self._transition_trajectory = self._TOPPRA_interpolation(poses)
-                # tip_trajectory = self._offset_tip_trajectory(self._transition_trajectory)
-                publish_viz_trajectory(self._transition_trajectory, self._pub_dronetransitionpath_viz)
-                # publish_viz_trajectory(tip_trajectory, self._pub_tooltransitionpath_viz)
-                # return trajectory
 
     def generate_print_layer(self, layer_number):
         self._point_count = 0 #ensure point count is reset in case last trajectory was interrupted
