@@ -138,7 +138,6 @@ class printStateMachine(object):
         # reset aft_pgo_map here
         self.trajectory.reset()
         self.trajectory.transition(self.pose, self.scan_start)
-        self.trajectory.pause(self.scan_start, 10)
         self.trajectory.publish_viz_trajectory(self.traj_viz_pub)
 
     def on_startPrint(self):
