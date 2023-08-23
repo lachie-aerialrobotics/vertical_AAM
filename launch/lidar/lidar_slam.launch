@@ -90,6 +90,7 @@
         <node pkg="fast_lio_localization" type="transform_fusion.py" name="transform_fusion" output="log" />
         <node pkg="pcl_ros" type="pcd_to_pointcloud" name="map_publisher" output="log"
             args="$(arg map_path) 1 _frame_id:=camera_init_map cloud_pcd:=/map_init" />
+        </group>
         
 
     <!-- PRINTING -->
