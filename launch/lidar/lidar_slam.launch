@@ -104,11 +104,11 @@
         <node name="psm3" pkg="vertical_aam" type="psm3.py" required="true" output="screen"/>
         <node name="pid_controller" pkg="vertical_aam" type="pid_controller.py" required="true" output="screen"/>
         <include file="$(find vertical_aam)/launch/flight_controller/mavros_node.launch"/>
-        <include file="$(find delta_2)/launch/stabilise.launch">
+        <!-- <include file="$(find delta_2)/launch/stabilise.launch">
             <arg name="sim" value="false"/>
-        </include>
+        </include> -->
 
     <!-- Viz -->
-        <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find point_lio)/rviz_cfg/loam_livox.rviz" />
+        <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find fast_lio)/rviz_cfg/loam_livox.rviz" />
 
 </launch>
