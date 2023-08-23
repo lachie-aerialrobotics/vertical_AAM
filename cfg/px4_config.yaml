@@ -97,7 +97,7 @@ setpoint_attitude:
     listen: false           # enable tf listener (disable topic subscribers)
     frame_id: "map"
     child_frame_id: "target_attitude"
-    rate_limit: 50.0
+    rate_limit: 100.0
 
 setpoint_raw:
   thrust_scaling: 1.0       # used in setpoint_raw attitude callback.
@@ -110,7 +110,7 @@ setpoint_position:
     listen: false           # enable tf listener (disable topic subscribers)
     frame_id: "map"
     child_frame_id: "target_position"
-    rate_limit: 50.0
+    rate_limit: 100.0
   mav_frame: LOCAL_NED
 
 # setpoint_velocity
@@ -244,10 +244,10 @@ px4flow:
 # vision_pose_estimate
 vision_pose:
   tf:
-    listen: false           # enable tf listener (disable topic subscribers)
-    frame_id: "odom"
-    child_frame_id: "vision_estimate"
-    rate_limit: 10.0
+    listen: true           # enable tf listener (disable topic subscribers)
+    frame_id: "map"
+    child_frame_id: "base_link"
+    rate_limit: 100.0
 
 # vision_speed_estimate
 vision_speed:

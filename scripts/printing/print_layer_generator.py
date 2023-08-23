@@ -22,7 +22,7 @@ class PrintLayerGenerator:
     def __init__(self):
         # get config values from parameter server
         map_topic_name = "/aft_pgo_map"
-        self.estimated_layer_height = 0.1
+        self.estimated_layer_height = 0.05
         self.scan_frame = 'camera_init'
         self.print_frame = 'print_origin'
         self.mesh_path = '../../print_model/cylinder.stl'
@@ -51,7 +51,7 @@ class PrintLayerGenerator:
         print_init_service = rospy.Service('init_print', Empty, self.init_print)
 
         # timer callback
-        rospy.Timer(rospy.Duration(0.1), self.timer_cb, reset=True)
+        rospy.Timer(rospy.Duration(1), self.timer_cb, reset=True)
 
         rospy.spin()
 
@@ -249,8 +249,8 @@ def material_model(layer_height, distance=0.1, flow_rate=0.1, expansion_ratio=20
     return speed
 
 def get_velocities(path, heights):
-    use_material_model = rospy.get_param('/print_slicer/use_material_model')
-    speed_default = rospy.get_param('/print_slicer/print_speed')
+    use_material_model = rospy.get_param('/print_planner/use_material_model')
+    speed_default = rospy.get_param('/print_planner/print_vel')
     n = np.shape(path)[0]
     velocities = np.zeros((n,3))
     for i in range(n):

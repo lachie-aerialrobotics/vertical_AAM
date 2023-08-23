@@ -41,7 +41,7 @@
         <arg name="P_base2tip" default="0.0"/>
         <arg name="Y_base2tip" default="1.5708"/>
 
-        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_base2tip" args="$(arg x_base2tip) $(arg y_base2tip) $(arg z_base2tip) $(arg R_base2tip) $(arg P_base2tip) $(arg Y_base2tip) base_link tooltip" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_base2tip" args="$(arg x_base2tip) $(arg y_base2tip) $(arg z_base2tip) $(arg R_base2tip) $(arg P_base2tip) $(arg Y_base2tip) base_link tooltip_init" />
 
     <!-- print plane to print_plane_tf-->
 
@@ -51,7 +51,7 @@
         <arg name="R_print_reversed" default="0.0"/>
         <arg name="P_print_reversed" default="3.141"/>
         <arg name="Y_print_reversed" default="0.0"/>
-        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_print_reversed" args="$(arg x_print_reversed) $(arg y_print_reversed) $(arg z_print_reversed) $(arg R_print_reversed) $(arg P_print_reversed) $(arg Y_print_reversed) tooltip tooltip_r" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_print_reversed" args="$(arg x_print_reversed) $(arg y_print_reversed) $(arg z_print_reversed) $(arg R_print_reversed) $(arg P_print_reversed) $(arg Y_print_reversed) tooltip_init tooltip_init_r" />
     
 
 

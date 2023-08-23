@@ -7,7 +7,7 @@ import toppra.constraint as constraint
 import toppra.algorithm as algo
 import tf2_geometry_msgs
 from std_msgs.msg import String, Header
-from std_srvs.srv import Empty, EmptyRequest, EmptyResponse
+from std_srvs.srv import Empty, EmptyResponse
 from geometry_msgs.msg import PoseStamped, TwistStamped, Vector3, Transform, TransformStamped, WrenchStamped, Twist, PoseArray, Quaternion
 from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
 from nav_msgs.msg import Path
@@ -15,6 +15,8 @@ from mavros_msgs.msg import State, ExtendedState
 from vertical_aam.srv import *
 from transitions import Machine
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
+
+#todo: fix velocity ffs
 
 class printStateMachine(object):
     states = ['Ground', 'Takeoff', 'Scan', 'Print', 'Land', 'Manual', 'Loiter']
@@ -34,12 +36,8 @@ class printStateMachine(object):
         # get config parameters from parameter server
         self.rate = rospy.get_param('/print_planner/setpoint_rate')
         self.tol_speed = rospy.get_param('/print_planner/tol_speed')
-        self.takeoff_hgt = rospy.get_param('/print_planner/tol_height')   
-        self.max_vel_move = rospy.get_param('/print_planner/transition_vel')
-        self.max_acc_move = rospy.get_param('/print_planner/transition_max_accel')
-        self.max_yawrate = rospy.get_param('/print_planner/max_yawrate')
-        self.max_yawrate_dot = rospy.get_param('/print_planner/max_yawrate_dot')  
-        self.scan_hgt = 4.0           
+        self.takeoff_hgt = rospy.get_param('/print_planner/tol_height')    
+        self.scan_hgt = rospy.get_param('/print_planner/scan_height')        
 
         self.yaw = 0.0
         self.tooltip_state = "RETRACTED"
@@ -60,7 +58,7 @@ class printStateMachine(object):
 
 
         # initiate state machine model with states and transitions listed above
-        self.machine = Machine(model=self, states=self.states, transitions=self.transitions, initial = 'Ground')#, on_exception='on_exception')
+        self.machine = Machine(model=self, states=self.states, transitions=self.transitions, initial = 'Ground', on_exception='on_exception')
 
         # publisher for on-board position controller
         self.sp_position_pub = rospy.Publisher(
@@ -120,6 +118,7 @@ class printStateMachine(object):
 
     def authorisation_srv(self, req):
         self.operator_confirmed = True
+        self.trajectory.start_time = rospy.Time.now()
         resp = EmptyResponse()
         return resp
 
@@ -139,12 +138,14 @@ class printStateMachine(object):
         self.trajectory.reset()
         self.trajectory.transition(self.pose, self.scan_start)
         self.trajectory.publish_viz_trajectory(self.traj_viz_pub)
+        self.trajectory.start_time = rospy.Time.now()
 
     def on_startPrint(self):
         self.trajectory.reset()
         self.trajectory.pause(trajectoryPoint2Pose(self.layer.points[0]), 2)
         self.trajectory.append_traj(self.layer)
         self.trajectory.publish_viz_trajectory(self.traj_viz_pub)
+        self.trajectory.start_time = rospy.Time.now()
 
     def on_startLoiter(self):
         def call_slicing_service():
@@ -156,14 +157,15 @@ class printStateMachine(object):
         self.layer = call_slicing_service()
         try:
             tf_map2print = self.tfBuffer.lookup_transform('map', 'print_origin', rospy.Time.now(), timeout=rospy.Duration(10))
-            tf_tip2drone = self.tfBuffer.lookup_transform('tooltip_r', 'base_link', rospy.Time.now(), timeout=rospy.Duration(10))
-            tf_drone2tip = self.tfBuffer.lookup_transform('base_link', 'tooltip_r', rospy.Time.now(), timeout=rospy.Duration(10))
+            tf_tip2drone = self.tfBuffer.lookup_transform('tooltip_init_r', 'base_link', rospy.Time.now(), timeout=rospy.Duration(10))
+            tf_drone2tip = self.tfBuffer.lookup_transform('base_link', 'tooltip_init_r', rospy.Time.now(), timeout=rospy.Duration(10))
         except:
             rospy.logerr("Printing plane not initialised!")
         self.layer = self.trajectory.transform_trajectory(self.layer, tf_map2print)
         self.layer = handle_drone_trajectory(self.layer, tf_drone2tip, tf_tip2drone)
         self.trajectory.transition(self.pose, trajectoryPoint2Pose(self.layer.points[0]))
         self.trajectory.publish_viz_trajectory(self.traj_viz_pub)
+        self.trajectory.start_time = rospy.Time.now()
 
     def on_manualTakeover(self):
         rospy.loginfo("Manual takeover")
@@ -175,6 +177,7 @@ class printStateMachine(object):
     # callbacks to occur on timer event - need to be defined for every state that is called
 
     def during_Loiter(self):
+        self.tooltip_state = "STAB_3DOF"
         if self.operator_confirmed:
             complete, pose, velocity = self.trajectory.follow()
             if not complete:
@@ -185,7 +188,7 @@ class printStateMachine(object):
                 self.startPrint()
 
     def during_Scan(self):
-        self.tooltip_state = "HOME"
+        self.tooltip_state = "STAB_3DOF"
         scan_complete, pose, velocity = self.trajectory.follow()
         if not scan_complete:
             self.pose = pose
@@ -258,10 +261,15 @@ class printStateMachine(object):
         self.during_always()
         exec("self.during_" + str(self.state) + "()") #execute the function name corresponding to the current state
         # update time stamps and publish current values of drone and manipulator commands
-        self.tooltip_pose.header.stamp = rospy.Time.now()
-        self.tooltip_twist.header.stamp = rospy.Time.now()
+        
         self.pose.header.stamp = rospy.Time.now()
         self.velocity.header.stamp = rospy.Time.now()
+
+        self.tooltip_pose.header.stamp = rospy.Time.now()
+        self.tooltip_twist.header.stamp = rospy.Time.now()
+        # self.tooltip_twist =
+        # self.tooltip_pose =
+
         self.sp_position_pub.publish(self.pose)
         self.sp_vel_pub.publish(self.velocity)
         self.pub_drone_state.publish(String(str(self.state)))
@@ -326,13 +334,17 @@ class trajectory:
         else:
             self.trajectory.points = trajectory_app.points
 
-    def transition(self, start_pose=PoseStamped(), end_pose=PoseStamped(), vel=0.5, acc=10.0, yawrate=100.0):
+    def transition(self, start_pose=PoseStamped(), end_pose=PoseStamped(), rate=30):
+        vel = rospy.get_param('/print_planner/transition_vel')
+        acc = rospy.get_param('/print_planner/transition_max_accel')
+        yawrate = rospy.get_param('/print_planner/max_yawrate')
+
         poses = PoseArray()
         poses.header.stamp = rospy.Time.now()
         poses.header.frame_id = start_pose.header.frame_id
         poses.poses.append(start_pose.pose)
         poses.poses.append(end_pose.pose)        
-        transition_trajectory = self._TOPPRA_interpolation(poses, vel, acc, yawrate, 1000, 30)
+        transition_trajectory = self._TOPPRA_interpolation(poses, vel, acc, yawrate, 1000, rate)
         self.append_traj(transition_trajectory)
         return transition_trajectory
 
@@ -529,11 +541,15 @@ def handle_drone_trajectory(toolpath_trajectory, tf_drone2tip, tf_tip2drone):
         traj.transform.rotation = Quaternion(q[0],q[1],q[2],q[3])
         traj = do_transform_transform(tf_inv_rotation, traj)
         drone_transform = do_transform_transform(tf, traj)
+
+        vel = toolpath_trajectory.points[i].velocities[0]
+        vel = do_transform_twist(vel, tf)
         
         drone_trajectory_point = MultiDOFJointTrajectoryPoint()
         drone_trajectory_point.time_from_start = toolpath_trajectory.points[i].time_from_start
         drone_trajectory_point.transforms.append(drone_transform.transform)
-        drone_trajectory_point.velocities.append(do_transform_twist(toolpath_trajectory.points[i].velocities[0], tf_inv).twist)
+
+        drone_trajectory_point.velocities.append(vel.twist)
         drone_trajectory.points.append(drone_trajectory_point)
     rospy.loginfo("Trajectory ready")
     return drone_trajectory
