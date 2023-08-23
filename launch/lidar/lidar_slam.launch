@@ -26,6 +26,8 @@
             <arg name="config_name" default = "MID360_config_0.json"/>
         </include>
 
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_base_link2tooltip_init" args="0.6 0 0.1 1.5708 0 1.5708 base_link tooltip_init" />
+
     <!-- point_lio -->
         <!-- <group if="$(arg init_map)">
             <node pkg="point_lio" type="pointlio_mapping" name="laserMapping" output="screen">
