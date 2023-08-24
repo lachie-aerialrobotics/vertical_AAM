@@ -18,4 +18,7 @@
 
     <!-- SC-A-LOAM -->
         <include file="$(find aloam_velodyne)/launch/aloam_point_lio.launch"/>
+
+    <!-- PIXHAWK -->
+        <include file="$(find vertical_aam)/launch/flight_controller/mavros_node.launch"/>
 </launch>
