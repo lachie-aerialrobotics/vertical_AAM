@@ -19,6 +19,14 @@
         <arg name="P_ground2lidar" default="0"/>
         <arg name="Y_ground2lidar" default="0"/>
 
+        <arg name="x_print_reversed" default="0.0"/>
+        <arg name="y_print_reversed" default="0.0"/>
+        <arg name="z_print_reversed" default="0.0"/>
+        <arg name="R_print_reversed" default="0.0"/>
+        <arg name="P_print_reversed" default="3.141"/>
+        <arg name="Y_print_reversed" default="0.0"/>
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_print_reversed" args="$(arg x_print_reversed) $(arg y_print_reversed) $(arg z_print_reversed) $(arg R_print_reversed) $(arg P_print_reversed) $(arg Y_print_reversed) tooltip_init tooltip_init_r" />
+
     <!-- livox_ros_driver2 -->
         <include file="$(find vertical_aam)/launch/lidar/msg_MID360.launch">
             <arg name="publish_freq" default = "100.0"/>
