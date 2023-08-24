@@ -22,7 +22,7 @@
 
     <!-- livox_ros_driver2 -->
         <include file="$(find vertical_aam)/launch/lidar/msg_MID360.launch">
-            <arg name="publish_freq" default = "100.0"/>
+            <arg name="publish_freq" default = "10.0"/>
             <arg name="config_name" default = "MID360_config_0.json"/>
         </include>
 
