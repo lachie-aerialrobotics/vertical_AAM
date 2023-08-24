@@ -1,5 +1,4 @@
 <launch>
-    <arg name="init_map" default="false"/>
     <arg name="map_path" default="$(find fast_lio)/PCD/scans.pcd"/>
 
     <!-- Drone geometry -->
@@ -62,15 +61,8 @@
             <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init_map" />
         </group>     -->
 
-        <group if="$(arg init_map)">
-            <rosparam command="load" file="$(find vertical_aam)/cfg/MID360_cfgs/fast_lio_mid360_initialise.yaml" />
-            <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init" />
-        </group>
-        <group unless="$(arg init_map)">
-            <rosparam command="load" file="$(find vertical_aam)/cfg/MID360_cfgs/fast_lio_mid360_relocalise.yaml" />
-            <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init_map" />
-        </group>  
-
+        <rosparam command="load" file="$(find vertical_aam)/cfg/MID360_cfgs/fast_lio_mid360_relocalise.yaml" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init_map" />
         <param name="feature_extract_enable" type="bool" value="0"/>
         <param name="point_filter_num" type="int" value="2"/>
         <param name="max_iteration" type="int" value="3" />
@@ -84,13 +76,11 @@
         <include file="$(find aloam_velodyne)/launch/aloam_point_lio.launch"/>
 
     <!-- Re-localization -->
-        <group unless="$(arg init_map)">
         <rosparam file="$(find vertical_aam)/cfg/MID360_cfgs/relocalise_mid360.yaml" />
         <node pkg="fast_lio_localization" type="global_localization.py" name="global_localization" output="log" />
         <node pkg="fast_lio_localization" type="transform_fusion.py" name="transform_fusion" output="log" />
         <node pkg="pcl_ros" type="pcd_to_pointcloud" name="map_publisher" output="log"
             args="$(arg map_path) 0.1 _frame_id:=camera_init_map cloud_pcd:=/map_init" />
-        </group>
         
 
     <!-- PRINTING -->

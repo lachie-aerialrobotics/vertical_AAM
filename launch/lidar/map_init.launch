@@ -1,0 +1,23 @@
+<launch>
+    <!-- livox_ros_driver2 -->
+        <include file="$(find vertical_aam)/launch/lidar/msg_MID360.launch">
+            <arg name="publish_freq" default = "100.0"/>
+            <arg name="config_name" default = "MID360_config_0.json"/>
+        </include>
+
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_base_link2tooltip_init" args="0.6 0 0.1 1.5708 0 1.5708 base_link tooltip_init" />
+
+        <rosparam command="load" file="$(find vertical_aam)/cfg/MID360_cfgs/fast_lio_mid360_relocalise.yaml" />
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init_map" />
+        <param name="feature_extract_enable" type="bool" value="0"/>
+        <param name="point_filter_num" type="int" value="2"/>
+        <param name="max_iteration" type="int" value="3" />
+        <param name="filter_size_surf" type="double" value="0.15" />
+        <param name="filter_size_map" type="double" value="0.25" />
+        <param name="cube_side_length" type="double" value="2000" />
+        <param name="runtime_pos_log_enable" type="bool" value="0" />
+        <node pkg="fast_lio" type="fastlio_mapping" name="laserMapping" output="log" />    
+
+    <!-- SC-A-LOAM -->
+        <include file="$(find aloam_velodyne)/launch/aloam_point_lio.launch"/>
+</launch>
