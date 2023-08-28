@@ -1,0 +1,4 @@
+<launch>
+    <rosparam file="$(find vertical_aam)/cfg/froth_pak_servo_config.yaml" />
+    <node name="froth_pak_servos" pkg="vertical_aam" type="froth_pak_servos.py" required="true" output="screen"/>
+</launch>

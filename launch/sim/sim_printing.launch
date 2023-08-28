@@ -83,7 +83,7 @@
 
     <!-- DRONE -->
         <rosparam file="$(find vertical_aam)/cfg/print_config.yaml" />
-        <node name="psm3" pkg="vertical_aam" type="psm3.py" required="true" output="screen"/>
+        <node name="psm" pkg="vertical_aam" type="print_state_machine.py" required="true" output="screen"/>
         <node name="pid_controller" pkg="vertical_aam" type="pid_controller.py" required="true" output="screen"/>
 
 

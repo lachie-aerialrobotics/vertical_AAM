@@ -1,5 +1,5 @@
 <launch>
-    <arg name="map_path" default="$(find fast_lio)/PCD/scans.pcd"/>
+    <arg name="map_path" default="$(find aloam_velodyne)/PCD/scans.pcd"/>
 
     <!-- Drone geometry -->
     <!-- LiDAR centre to FCU -->
@@ -23,7 +23,7 @@
         <arg name="y_print_reversed" default="0.0"/>
         <arg name="z_print_reversed" default="0.0"/>
         <arg name="R_print_reversed" default="0.0"/>
-        <arg name="P_print_reversed" default="3.141"/>
+        <arg name="P_print_reversed" default="3.14159"/>
         <arg name="Y_print_reversed" default="0.0"/>
         <node pkg="tf2_ros" type="static_transform_publisher" name="transform_print_reversed" args="$(arg x_print_reversed) $(arg y_print_reversed) $(arg z_print_reversed) $(arg R_print_reversed) $(arg P_print_reversed) $(arg Y_print_reversed) tooltip_init tooltip_init_r" />
 
@@ -33,6 +33,7 @@
             <arg name="config_name" default = "MID360_config_0.json"/>
         </include>
 
+        <!-- todo: replace fudge with manipulator code -->
         <node pkg="tf2_ros" type="static_transform_publisher" name="transform_base_link2tooltip_init" args="0.6 0 0.1 1.5708 0 1.5708 base_link tooltip_init" />
 
     <!-- point_lio -->
@@ -95,16 +96,13 @@
         <rosparam file="$(find vertical_aam)/cfg/MID360_cfgs/relocalise_mid360.yaml" />
         <node name="print_initialiser" pkg="vertical_aam" type="print_plane_finder.py" required="true" output="screen"/>
         <rosparam file="$(find vertical_aam)/cfg/print_config/print_origin.yaml" />
-        <node name="print_layer_generator" pkg="vertical_aam" type="print_layer_generator.py" required="true" output="screen"/>
-
-    <!-- DRONE -->
+        <node name="print_layer_generator" pkg="vertical_aam" type="print_layer_generator.py" required="true" output="screen"/> 
         <rosparam file="$(find vertical_aam)/cfg/print_config.yaml" />
-        <node name="psm3" pkg="vertical_aam" type="psm3.py" required="true" output="screen"/>
+        <node name="psm" pkg="vertical_aam" type="print_state_machine.py" required="true" output="screen"/>
+    
+    <!-- DRONE -->    
         <node name="pid_controller" pkg="vertical_aam" type="pid_controller.py" required="true" output="screen"/>
         <include file="$(find vertical_aam)/launch/flight_controller/mavros_node.launch"/>
-        <!-- <include file="$(find delta_2)/launch/stabilise.launch">
-            <arg name="sim" value="false"/>
-        </include> -->
 
     <!-- Viz -->
         <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find fast_lio)/rviz_cfg/loam_livox.rviz" />
