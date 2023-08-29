@@ -4,4 +4,4 @@ print_servos:
   open_position: 0        #bits
   closed_position: 1024   #bits
   baud: 57600             
-  port: /dev/ttyUSB0
+  port: /dev/ttyUSB2
