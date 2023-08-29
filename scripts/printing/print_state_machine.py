@@ -2,7 +2,7 @@
 import rospy
 import tf2_ros
 from std_msgs.msg import String
-from std_srvs.srv import Empty, EmptyResponse, Trigger, TriggerRequest
+from std_srvs.srv import Empty, EmptyResponse, EmptyRequest, Trigger, TriggerRequest
 from geometry_msgs.msg import PoseStamped, TwistStamped, Vector3, TransformStamped, Quaternion
 from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
 from nav_msgs.msg import Path
@@ -35,7 +35,8 @@ class printStateMachine(object):
         self.tol_speed = rospy.get_param('/print_planner/tol_speed')
         self.takeoff_hgt = rospy.get_param('/print_planner/tol_height')    
         self.scan_hgt = rospy.get_param('/print_planner/scan_height')  
-        self.pause_before_print = 1.0      
+        self.pause_before_print = 1.0   
+        self.scan_time = 5   
 
         self.yaw = 0.0
         self.tooltip_state = "RETRACTED"
@@ -141,7 +142,9 @@ class printStateMachine(object):
         # reset aft_pgo_map here
         self.trajectory.reset()
         self.trajectory.transition(self.pose, self.scan_start)
+        self.tooltip_trajectory.pause(self.scan_start, self.scan_time)
         self.trajectory.publish_viz_trajectory(self.traj_viz_pub)
+        call_scan_reset_service()
 
     def on_startPrint(self):
         pause_time = self.pause_before_print
@@ -343,6 +346,14 @@ def call_nozzle_close_service():
         resp = close_nozzle(req)
     except:
         rospy.logwarn("printing hardware not connected")
+
+def call_scan_reset_service():
+    try:
+        restart_mapping = rospy.ServiceProxy('restart_mapping', Empty)
+        req = EmptyRequest()
+        resp = restart_mapping(req)
+    except:
+        rospy.logwarn("mapping restart unavailable")
 
 if __name__ == '__main__':
     # initialize node
