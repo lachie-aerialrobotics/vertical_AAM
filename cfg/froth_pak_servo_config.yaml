@@ -1,6 +1,7 @@
 print_servos:
-  purge_time: 2.0         #s
+  purge_time: 3.0         #s
+  purge_delay: 1.5        #s
   open_position: 0        #bits
-  closed_position: 2048   #bits
+  closed_position: 1024   #bits
   baud: 57600             
   port: /dev/ttyUSB0

@@ -26,7 +26,7 @@ class printStateMachine(object):
         {'trigger': 'startLanding',     'source': '*',                              'dest': 'Land'},
         {'trigger': 'finishLanding',    'source': ['Land', 'Manual'],               'dest': 'Ground'},
         {'trigger': 'manualTakeover',   'source': '*',                              'dest': 'Manual',   'before':   'on_manualTakeover'},
-        {'trigger': 'switchToGround',   'source': ['Manual', 'Landing'],            'dest': 'Ground'                                   }
+        {'trigger': 'switchToGround',   'source': ['Manual', 'Landing'],            'dest': 'Ground'                                   },
         ]
     
     def __init__(self):
@@ -130,6 +130,10 @@ class printStateMachine(object):
         self.pad_pose = PoseStamped()
         self.pad_pose = self.local_pose
         self.pad_pose.pose.position.z = self.takeoff_hgt
+
+        self.scan_start = self.pad_pose
+        self.scan_start.pose.position.z = self.scan_hgt
+        
         rospy.loginfo("Landing site updated at x=" + str(self.pad_pose.pose.position.x) +
             ", y=" + str(self.pad_pose.pose.position.y) + ".")
 
@@ -158,10 +162,10 @@ class printStateMachine(object):
         call_nozzle_open_service()
 
     def on_endPrint(self):
-        self.on_startScan()
         #close nozzle
         call_nozzle_close_service()
-
+        self.on_startScan()
+        
     def on_startLoiter(self):
         layer = call_slicing_service()
 
