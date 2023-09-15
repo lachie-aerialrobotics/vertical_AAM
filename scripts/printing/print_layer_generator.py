@@ -161,9 +161,9 @@ def o3d_to_pc2(o3d_pc=o3d.geometry.PointCloud(), header=Header()):
     #convert back to structured array
     pc_np = np.asarray(o3d_pc.points)
     pc_arr = np.zeros(np.shape(pc_np)[0], dtype=[
-        ('x', np.float32),
-        ('y', np.float32),
-        ('z', np.float32),
+        ('x', np.float),
+        ('y', np.float),
+        ('z', np.float),
         # ('rgb', np.float32),
         ])
     pc_arr['x'] = pc_np[:, 0]
