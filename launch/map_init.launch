@@ -1,5 +1,5 @@
 <launch>
-    <arg name="lidar_json" default="$(find vertical_aam)/cfg/MID360_cfgs/MID360_config_1.json"/>
+    <arg name="lidar_json" default="$(find vertical_aam)/cfg/MID360_cfgs/MID360_config_2.json"/>
     <arg name="lidar_yaml" default="$(find vertical_aam)/cfg/MID360_cfgs/fast_lio_mid360.yaml"/>
 
     <!-- livox_ros_driver2 -->
