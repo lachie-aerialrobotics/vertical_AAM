@@ -27,7 +27,7 @@
         </include>
 
     <!-- EXTRUDER -->
-        <include file="$(find vertical_aam)/launch/hardware/froth_pak.launch"/>
+        <!-- <include file="$(find vertical_aam)/launch/hardware/froth_pak.launch"/> -->
 
     <!-- SLAM -->
         <include file="$(find vertical_aam)/launch/lidar/lidar.launch"/>
