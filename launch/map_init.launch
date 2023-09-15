@@ -21,6 +21,7 @@
 
     <!-- SC-A-LOAM -->
         <include file="$(find aloam_velodyne)/launch/aloam_point_lio.launch"/>
+        <node name="pgo_services" pkg="aloam_velodyne" type="pgo_services.py" required="true" output="screen"/>
 
     <!-- PIXHAWK -->
         <include file="$(find vertical_aam)/launch/flight_controller/mavros_node.launch"/>
