@@ -11,8 +11,8 @@
     <!-- FAST-LIO -->
         <rosparam command="load" file="$(arg lidar_yaml)" />
         <param name="feature_extract_enable" type="bool" value="0"/>
-        <param name="point_filter_num" type="int" value="1"/>
-        <param name="max_iteration" type="int" value="5" />
+        <param name="point_filter_num" type="int" value="2"/>
+        <param name="max_iteration" type="int" value="3" />
         <param name="filter_size_surf" type="double" value="0.15" />
         <param name="filter_size_map" type="double" value="0.25" />
         <param name="cube_side_length" type="double" value="2000" />
