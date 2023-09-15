@@ -31,7 +31,7 @@
 
     <!-- SLAM -->
         <include file="$(find vertical_aam)/launch/lidar/lidar.launch"/>
-        <node name="pgo_services" pkg="aloam_velodyne" type="pgo_services.py" required="true" output="screen"/>
+        <!-- <node name="pgo_services" pkg="aloam_velodyne" type="pgo_services.py" required="true" output="screen"/> -->
     
     <!-- PRINTING -->
         <node name="print_initialiser" pkg="vertical_aam" type="print_plane_finder.py" required="true" output="screen"/>
