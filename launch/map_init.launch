@@ -49,4 +49,7 @@
 
     <!-- PIXHAWK -->
         <include file="$(find vertical_aam)/launch/flight_controller/mavros_node.launch"/>
+
+    <!-- ROSBAG -->
+        <node pkg="rosbag" type="record" name="rosbag_record" args="-o $(env HOME)/bags/ -a"/>
 </launch>
