@@ -3,7 +3,7 @@
     <arg name="fcu_url" default="/dev/ttyUSB0:3000000" />
     <!-- <arg name="fcu_url" default="/dev/ttyTHS0:2000000" /> -->
     <!-- <arg name="gcs_url" default="udp-b://127.0.0.1:14555@14550" /> -->
-    <arg name="gcs_url" default="udp://@192.168.173.167" />
+    <arg name="gcs_url" default="udp://@192.168.106.167" />
     <arg name="tgt_system" default="1" />
     <arg name="tgt_component" default="1" />
     <arg name="log_output" default="screen" />
