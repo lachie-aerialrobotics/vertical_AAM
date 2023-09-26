@@ -20,6 +20,8 @@
     <!-- Reverse direction of tooltip -->
         <node pkg="tf2_ros" type="static_transform_publisher" name="transform_print_reversed" args="0 0 0 0 3.14159 0 tooltip_init tooltip_init_r" />
 
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_camera_init" args="0 0 0 0 0 0 map camera_init" />
+
 
     <arg name="lidar_json" default="$(find vertical_aam)/cfg/MID360_cfgs/MID360_config_2.json"/>
     <arg name="lidar_yaml" default="$(find vertical_aam)/cfg/MID360_cfgs/fast_lio_mid360.yaml"/>
