@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="vehicle_name" default="iris"/> <!-- hex, hex_delta or hex_stewart -->
+    <arg name="world_name" default="ARLarena"/> <!-- ARLarena or DroneHub -->
+    <arg name="viz" default="true"/>
+    <arg name="init" default="true"/>
+    
+    <!-- DRONE SPAWN POINT -->
+    <arg name="x" default="0"/>
+    <arg name="y" default="2"/>
+    <arg name="z" default="0.5"/>
+    <arg name="R" default="0"/>
+    <arg name="P" default="0"/>
+    <arg name="Y" default="0.5"/>
+
+    <!-- Drone geometry -->
+    <!-- LiDAR centre to FCU -->
+        <arg name="x_lidar2base" default="-0.13"/>
+        <arg name="y_lidar2base" default="0"/>
+        <arg name="z_lidar2base" default="-0.069"/>
+        <arg name="R_lidar2base" default="0"/>
+        <arg name="P_lidar2base" default="0"/>
+        <arg name="Y_lidar2base" default="0"/>
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_lidar2base" args="$(arg x_lidar2base) $(arg y_lidar2base) $(arg z_lidar2base) $(arg R_lidar2base) $(arg P_lidar2base) $(arg Y_lidar2base) aft_mapped base_link" />
+        
+    <!-- Height of FCU off ground-->
+        <arg name="x_ground2lidar" default="0.13"/>
+        <arg name="y_ground2lidar" default="0"/>
+        <arg name="z_ground2lidar" default="0.369"/>
+        <arg name="R_ground2lidar" default="0"/>
+        <arg name="P_ground2lidar" default="0"/>
+        <arg name="Y_ground2lidar" default="0"/>
+
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init" />
+    
+    <!-- base link to tooltip -->
+        <arg name="x_base2tip" default="0.3"/>
+        <arg name="y_base2tip" default="0.0"/>
+        <arg name="z_base2tip" default="0.1"/>
+        <arg name="R_base2tip" default="1.5708"/>
+        <arg name="P_base2tip" default="0.0"/>
+        <arg name="Y_base2tip" default="1.5708"/>
+
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_base2tip" args="$(arg x_base2tip) $(arg y_base2tip) $(arg z_base2tip) $(arg R_base2tip) $(arg P_base2tip) $(arg Y_base2tip) base_link tooltip_init" />
+
+    <!-- print plane to print_plane_tf-->
+
+        <arg name="x_print_reversed" default="0.0"/>
+        <arg name="y_print_reversed" default="0.0"/>
+        <arg name="z_print_reversed" default="0.0"/>
+        <arg name="R_print_reversed" default="0.0"/>
+        <arg name="P_print_reversed" default="3.141"/>
+        <arg name="Y_print_reversed" default="0.0"/>
+        <node pkg="tf2_ros" type="static_transform_publisher" name="transform_print_reversed" args="$(arg x_print_reversed) $(arg y_print_reversed) $(arg z_print_reversed) $(arg R_print_reversed) $(arg P_print_reversed) $(arg Y_print_reversed) tooltip_init tooltip_init_r" />
+    
+
+
+    <!-- LAUNCH VANILLA GAZEBO SIM -->
+    <include file="$(find vertical_aam)/launch/sim/px4_gazebo.launch">
+        <arg name="x" value="$(arg x)"/>
+        <arg name="y" value="$(arg y)"/>
+        <arg name="z" value="$(arg z)"/>
+        <arg name="R" value="$(arg R)"/>
+        <arg name="P" value="$(arg P)"/>
+        <arg name="Y" value="$(arg Y)"/>
+        <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="vehicle" value="$(arg vehicle_name)"/>
+    </include>
+
+    <!-- LIDAR MAP SIMULATION -->
+    <include file="$(find vertical_aam)/launch/sim/lidar_sim.launch">
+        <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="x" value="$(arg x)"/>
+        <arg name="y" value="$(arg y)"/>
+        <arg name="z" value="$(arg z)"/>
+    </include>
+
+     <!-- PRINTING -->
+        <rosparam file="$(find vertical_aam)/cfg/MID360_cfgs/relocalise_mid360.yaml" />
+        <node name="print_initialiser" pkg="vertical_aam" type="print_plane_finder.py" required="true" output="screen"/>
+        <rosparam file="$(find vertical_aam)/cfg/print_config/print_origin.yaml" />
+        <node name="print_layer_generator" pkg="vertical_aam" type="print_layer_generator.py" required="true" output="screen"/>
+
+    <!-- DRONE -->
+        <rosparam file="$(find vertical_aam)/cfg/print_config.yaml" />
+        <node name="psm" pkg="vertical_aam" type="trajectory_state_machine.py" required="true" output="screen"/>
+        <node name="pid_controller" pkg="vertical_aam" type="pid_controller.py" required="true" output="screen"/>
+
+
+    <!-- RVIZ AND RQT-->
+    <group if="$(arg viz)">
+         <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find point_lio)/rviz_cfg/loam_livox.rviz" />
+    </group>
+</launch>

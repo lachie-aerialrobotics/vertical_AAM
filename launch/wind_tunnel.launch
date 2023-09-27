@@ -1,0 +1,50 @@
+<launch>
+    <!-- DRONE GEOMETRY -->
+        <!-- LiDAR centre to FCU -->
+            <arg name="x_lidar2base" default="-0.13"/>
+            <arg name="y_lidar2base" default="0"/>
+            <arg name="z_lidar2base" default="-0.069"/>
+            <arg name="R_lidar2base" default="0"/>
+            <arg name="P_lidar2base" default="0"/>
+            <arg name="Y_lidar2base" default="0"/>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="transform_lidar2base" args="$(arg x_lidar2base) $(arg y_lidar2base) $(arg z_lidar2base) $(arg R_lidar2base) $(arg P_lidar2base) $(arg Y_lidar2base) aft_mapped base_link" />
+            
+        <!-- Height of LiDAR from ground plane -->
+            <arg name="x_ground2lidar" default="0.13"/>
+            <arg name="y_ground2lidar" default="0"/>
+            <arg name="z_ground2lidar" default="0.369"/>
+            <arg name="R_ground2lidar" default="0"/>
+            <arg name="P_ground2lidar" default="0"/>
+            <arg name="Y_ground2lidar" default="0"/>
+            <node pkg="tf2_ros" type="static_transform_publisher" name="transform_ground2lidar" args="$(arg x_ground2lidar) $(arg y_ground2lidar) $(arg z_ground2lidar) $(arg R_ground2lidar) $(arg P_ground2lidar) $(arg Y_ground2lidar) map camera_init_map" />
+
+        <!-- Reverse direction of tooltip -->
+            <node pkg="tf2_ros" type="static_transform_publisher" name="transform_print_reversed" args="0 0 0 0 3.14159 0 tooltip_init tooltip_init_r" />
+
+    <!-- MANIPULATOR -->
+        <include file="$(find delta_2)/launch/stewart.launch">
+            <arg name = "nozzle_length" value = "0.4"/>
+        </include>
+
+    <!-- EXTRUDER -->
+        <!-- <include file="$(find vertical_aam)/launch/hardware/froth_pak.launch"/> -->
+
+    <!-- SLAM -->
+        <include file="$(find vertical_aam)/launch/lidar/lidar.launch"/>
+        <!-- <node name="pgo_services" pkg="aloam_velodyne" type="pgo_services.py" required="true" output="screen"/> -->
+    
+    <!-- PRINTING -->
+        <node name="print_initialiser" pkg="vertical_aam" type="print_plane_finder.py" required="true" output="screen"/>
+        <rosparam file="$(find vertical_aam)/cfg/print_config/print_origin.yaml" />
+        <node name="print_layer_generator" pkg="vertical_aam" type="print_layer_generator.py" required="true" output="screen"/> 
+        <rosparam file="$(find vertical_aam)/cfg/print_config.yaml" />
+        <node name="psm" pkg="vertical_aam" type="trajectory_state_machine.py" required="true" output="screen"/>
+    
+    <!-- DRONE -->    
+        <node name="pid_controller" pkg="vertical_aam" type="pid_controller.py" required="true" output="screen"/>
+        <include file="$(find vertical_aam)/launch/flight_controller/mavros_node.launch"/>
+
+    <!-- Viz -->
+        <!-- <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find fast_lio)/rviz_cfg/loam_livox.rviz" /> -->
+
+</launch>
