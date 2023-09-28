@@ -20,6 +20,7 @@
 
         <!-- Reverse direction of tooltip -->
             <node pkg="tf2_ros" type="static_transform_publisher" name="transform_print_reversed" args="0 0 0 0 3.14159 0 tooltip_init tooltip_init_r" />
+            <node pkg="tf2_ros" type="static_transform_publisher" name="transform_print_reversed" args="0 0 0 0 0 0 base_link tooltip_init" />
 
     <!-- MANIPULATOR -->
         <!-- <include file="$(find delta_2)/launch/stewart.launch">
