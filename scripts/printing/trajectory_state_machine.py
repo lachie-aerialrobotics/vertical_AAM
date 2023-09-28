@@ -146,7 +146,7 @@ class printStateMachine(object):
         self.trajectory.transition(self.pose, self.scan_start)
         self.tooltip_trajectory.pause(self.scan_start, self.scan_time)
         self.trajectory.publish_viz_trajectory(self.traj_viz_pub)
-        call_scan_reset_service()
+        # call_scan_reset_service()
 
     def on_startPrint(self):
         pause_time = self.pause_before_print
@@ -164,11 +164,11 @@ class printStateMachine(object):
         self.trajectory.publish_viz_trajectory(self.traj_viz_pub)
 
         #open nozzle
-        call_nozzle_open_service()
+        # call_nozzle_open_service()
 
     def on_endPrint(self):
         #close nozzle
-        call_nozzle_close_service()
+        # call_nozzle_close_service()
         self.on_startScan()
         
     def on_startLoiter(self):
