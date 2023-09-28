@@ -196,10 +196,10 @@ class printStateMachine(object):
         rospy.loginfo("Manual takeover")
         call_nozzle_close_service()
 
-    def on_exception(self):
-        rospy.logerr('state machine exception!')
-        self.startLanding()
-        call_nozzle_close_service()
+    # def on_exception(self):
+    #     rospy.logerr('state machine exception!')
+    #     self.startLanding()
+    #     call_nozzle_close_service()
 
     #---------------------------------------------------------------------------------------------------------------
     # callbacks to occur on timer event - need to be defined for every state that is called
@@ -216,13 +216,13 @@ class printStateMachine(object):
                 self.startPrint()
 
     def during_Scan(self):
-        self.tooltip_state = "STAB_3DOF"
-        scan_complete, pose, velocity = self.trajectory.follow()
-        if not scan_complete:
-            self.pose = pose
-            self.velocity = velocity
-        else:
-            self.startLoiter()
+        # self.tooltip_state = "STAB_3DOF"
+        # scan_complete, pose, velocity = self.trajectory.follow()
+        # if not scan_complete:
+        #     self.pose = pose
+        #     self.velocity = velocity
+        # else:
+        self.startLoiter()
     
     def during_Print(self):
         self.tooltip_state = "STAB_6DOF"
@@ -360,11 +360,11 @@ class printStateMachine(object):
         return self.traj_blind.trajectory
 
 
-def call_slicing_service():
-    slice_print = rospy.ServiceProxy('generate_layer', generateLayer)
-    req = generateLayerRequest()
-    resp = slice_print(req)
-    return resp.trajectory
+# def call_slicing_service():
+#     slice_print = rospy.ServiceProxy('generate_layer', generateLayer)
+#     req = generateLayerRequest()
+#     resp = slice_print(req)
+#     return resp.trajectory
 
 def call_nozzle_open_service():
     try:
