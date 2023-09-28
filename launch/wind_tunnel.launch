@@ -22,9 +22,9 @@
             <node pkg="tf2_ros" type="static_transform_publisher" name="transform_print_reversed" args="0 0 0 0 3.14159 0 tooltip_init tooltip_init_r" />
 
     <!-- MANIPULATOR -->
-        <include file="$(find delta_2)/launch/stewart.launch">
+        <!-- <include file="$(find delta_2)/launch/stewart.launch">
             <arg name = "nozzle_length" value = "0.4"/>
-        </include>
+        </include> -->
 
     <!-- EXTRUDER -->
         <!-- <include file="$(find vertical_aam)/launch/hardware/froth_pak.launch"/> -->
