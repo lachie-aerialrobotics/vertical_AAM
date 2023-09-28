@@ -22,7 +22,7 @@ class printStateMachine(object):
         {'trigger': 'startScan',        'source': ['Takeoff', 'Manual'],            'dest': 'Scan',     'before':   'on_startScan'},
         {'trigger': 'startPrint',       'source': 'Loiter',                         'dest': 'Print',    'before':   'on_startPrint'},
         {'trigger': 'endPrint',         'source': 'Print',                          'dest': 'Scan',     'before':    'on_endPrint'},
-        {'trigger': 'startLoiter',      'source': 'Scan',                           'dest': 'Loiter',   'before':   'on_startLoiter'},
+        {'trigger': 'startLoiter',      'source': ['Scan', 'Takeoff'],                           'dest': 'Loiter',   'before':   'on_startLoiter'},
         {'trigger': 'startLanding',     'source': '*',                              'dest': 'Land'},
         {'trigger': 'finishLanding',    'source': ['Land', 'Manual'],               'dest': 'Ground'},
         {'trigger': 'manualTakeover',   'source': '*',                              'dest': 'Manual',   'before':   'on_manualTakeover'},
