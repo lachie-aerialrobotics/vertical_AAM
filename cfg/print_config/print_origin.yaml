@@ -4,7 +4,7 @@ print_transform:
   frame_id: map
   child_frame_id: print_origin
   translation:
-    x: 0
+    x: 1.0
     y: 0
     z: 0.655
   orientation:
