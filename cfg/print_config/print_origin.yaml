@@ -6,7 +6,7 @@ print_transform:
   translation:
     x: 0
     y: 0
-    z: 0.75
+    z: 0.655
   orientation:
     x: 0
     y: 0

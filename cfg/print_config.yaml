@@ -3,7 +3,7 @@ print_planner:
 
   #Take-off and landing
   tol_speed:                0.3 #m/s
-  tol_height:               1.0 #m
+  tol_height:               0.4 #m
         
   #TOPPRA     
   transition_vel:           0.20 #m/s
@@ -14,4 +14,4 @@ print_planner:
   #slicer 
   use_material_model:       false
   print_vel:                0.1 #m/s
-  scan_height:              2.0 #m
+  scan_height:              0.5 #m

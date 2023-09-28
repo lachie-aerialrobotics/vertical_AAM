@@ -345,19 +345,17 @@ class printStateMachine(object):
             return pose1
         
         pose1 = generate_pose(0, 0, 0)
-        pose2 = generate_pose(0.5, 0, 0)
-        pose3 = generate_pose(0.5, 0, 0.5)
-        pose4 = generate_pose(0, 0, 0.5)
+        # pose2 = generate_pose(0.5, 0, 0)
+        # pose3 = generate_pose(0.5, 0, 0.5)
+        # pose4 = generate_pose(0, 0, 0.5)
 
         self.traj_blind.pause(pose1, 10)
-        self.traj_blind.transition(pose1, pose2)
-        self.traj_blind.pause(pose2, 10)
-        self.traj_blind.transition(pose2, pose3)
-        self.traj_blind.pause(pose3, 10)
-        self.traj_blind.transition(pose3, pose4)
-        self.traj_blind.pause(pose4, 10)
-
-        # self.traj_blind.publish_viz_trajectory(self.traj_viz_pub)
+        # self.traj_blind.transition(pose1, pose2)
+        # self.traj_blind.pause(pose2, 10)
+        # self.traj_blind.transition(pose2, pose3)
+        # self.traj_blind.pause(pose3, 10)
+        # self.traj_blind.transition(pose3, pose4)
+        # self.traj_blind.pause(pose4, 10)
 
         return self.traj_blind.trajectory
 
