@@ -177,9 +177,9 @@ class printStateMachine(object):
         layer = self.generate_blind_trajectory()
 
         try:
-            tf_map2print = self.tfBuffer.lookup_transform('map', 'print_origin', rospy.Time.now(), timeout=rospy.Duration(5))
-            tf_tip2drone = self.tfBuffer.lookup_transform('tooltip_init_r', 'base_link', rospy.Time.now(), timeout=rospy.Duration(5))
-            tf_tip2tip = self.tfBuffer.lookup_transform('tooltip_init_r', 'tooltip_init', rospy.Time.now(), timeout=rospy.Duration(5))
+            tf_map2print = self.tfBuffer.lookup_transform('map', 'print_origin', rospy.Time.now(), timeout=rospy.Duration(20))
+            tf_tip2drone = self.tfBuffer.lookup_transform('tooltip_init_r', 'base_link', rospy.Time.now(), timeout=rospy.Duration(20))
+            tf_tip2tip = self.tfBuffer.lookup_transform('tooltip_init_r', 'tooltip_init', rospy.Time.now(), timeout=rospy.Duration(20))
         except:
             rospy.logerr("Unable to fetch TFs!")
 
