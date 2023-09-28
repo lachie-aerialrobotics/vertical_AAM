@@ -47,5 +47,8 @@
 
     <!-- Viz -->
         <!-- <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find fast_lio)/rviz_cfg/loam_livox.rviz" /> -->
+    
+    <!-- ROSBAG -->
+        <node pkg="rosbag" type="record" name="rosbag_record" args="-o $(env HOME)/bags/ -a"/>
 
 </launch>
