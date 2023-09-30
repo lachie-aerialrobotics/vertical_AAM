@@ -347,7 +347,7 @@ class printStateMachine(object):
         
         pause_time = 30
         
-        # pose = generate_pose(0, 0, 0.1)
+        pose = generate_pose(0, 0, 0.1)
         # pose = generate_pose(-0.2, 0, 0.1)
         # pose = generate_pose(1.5, 0, 0.1)
         # pose = generate_pose(1.5, 0, 0.40)
@@ -359,7 +359,7 @@ class printStateMachine(object):
         # pose = generate_pose(0.3, 0, 0.40)
         # pose = generate_pose(0.1, 0, 0.40)
         # pose = generate_pose(-0.1, 0, 0.40)
-        pose = generate_pose(-0.3, 0, 0.40)
+        # pose = generate_pose(-0.3, 0, 0.40)
 
         self.traj_blind.pause(pose, pause_time)
         # self.traj_blind.transition(pose1, pose2)
