@@ -356,8 +356,8 @@ class printStateMachine(object):
         # pose = generate_pose(0.9, 0, 0.40)
         # pose = generate_pose(0.7, 0, 0.40)
         # pose = generate_pose(0.5, 0, 0.40)
-        pose = generate_pose(0.3, 0, 0.40)
-        # pose = generate_pose(0.1, 0, 0.40)
+        # pose = generate_pose(0.3, 0, 0.40)
+        pose = generate_pose(0.1, 0, 0.40)
         # pose = generate_pose(-0.1, 0, 0.40)
         # pose = generate_pose(-0.3, 0, 0.40)
 
